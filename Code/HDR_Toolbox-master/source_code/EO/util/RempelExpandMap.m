@@ -1,12 +1,13 @@
-function expand_map = RempelExpandMap(L, gammaRemoval, bVideoFlag)
+function expand_map = RempelExpandMap(L, gammaRemoval, bVideoFlag, sigma)
 %
-%	 expand_map = RempelExpandMap(L, gammaRemoval, bVideoFlag)
+%	 expand_map = RempelExpandMap(L, gammaRemoval, bVideoFlag, sigma)
 %
 %
 %    Input:
 %       -L: a luminance channel
 %       -gammaRemoval: the gamma value to be removed if known
 %       -bVideoFlag: a flag, true if img is a frame of a video
+%       -sigma: Gaussian kernel of ceil(sigma*5) x ceil(sigma*5)
 %
 %     Output:
 %       -expand_map: the final expand map
@@ -31,7 +32,12 @@ if(~exist('gammaRemoval','var'))
     gammaRemoval = -1;
 end
 
-%saturated pixels threshold
+if(~exist('sigma','var'))
+    sigma = 30; %150x150 Gaussian filter
+end
+
+
+%saturated pixels threshold - (Smooth brightness enhancement) - section 3.2
 thresholdImg   = 250/255;		%Images
 thresholdVideo = 230/255;		%Videos
 
@@ -50,11 +56,14 @@ if(gammaRemoval>0)
 end
 
 %binary map for saturated pixels
-mask = zeros(size(L));
-mask(L>threshold) = 1;
+mask = zeros(size(L)); % generate array of all zeros of size(L)
+mask(L>threshold) = 1; % Set mask to 1 if L > threshold
 
 %Filtering with a 150x150 Gaussian kernel size
-sbeFil = GaussianFilter(mask,30);
+% Blur mask with large kernel of approx Gaussian shape. Exact size of blur
+% kernel depends on the display dimensions and anticipated range of viewing
+% distance
+sbeFil = GaussianFilter(mask,sigma);
 
 %Calculation of the gradients of L using a 5x5 mask to have thick edges
 Sy = [ -1 -4  -6 -4 -1;...
