@@ -3,6 +3,7 @@ close all;
 clear all;
 
 im = hdrimread('Bottles_Small.hdr');
+%im = hdrimread('/Users/calvinching/Documents/ubc/eece_541/project/HDRImages/bistro_01/bistro_01_000295.hdr');
 luminance = lum(im);
 
 figure;
@@ -11,17 +12,17 @@ title('Original Image');
 
 edge_mask = edge(luminance, 'canny');
 
-[Row Col RGB]=size(im);
+figure('Name', 'Edge Mask'),imshow(edge_mask);
 
-Frame3= zeros(Row,Col,1);
-Frame1= zeros(Row,Col,1);
+[Row, Col, RGB]=size(im);
+
+Frame1= zeros(Row,Col);
 Frame2= zeros(Row,Col,RGB);
 
-
 % 3x3 masking of the edge 
-  for j=2:Col    
-    for i=2:Row
-             if((edge_mask(i, j) == 1)&((edge_mask(i, j-1) == 1)|(edge_mask(i, j+1) == 1)|(edge_mask(i-1, j-1) == 1)|(edge_mask(i-1, j) == 1)|(edge_mask(i-1, j+1) == 1) |(edge_mask(i+1, j-1) == 1) | (edge_mask(i+1,j) == 1)|(edge_mask(i+1,j+1) == 1)))
+for j=2:Col-1
+    for i=2:Row-1
+        if((edge_mask(i, j) == 1)||((edge_mask(i, j-1) == 1)||(edge_mask(i, j+1) == 1)||(edge_mask(i-1, j-1) == 1)||(edge_mask(i-1, j) == 1)||(edge_mask(i-1, j+1) == 1)||(edge_mask(i+1, j-1) == 1)||(edge_mask(i+1,j) == 1)||(edge_mask(i+1,j+1) == 1)))
              Frame1(i, j) =1;
              Frame1(i, j-1) = 1;
              Frame1(i, j+1) = 1;
@@ -31,7 +32,7 @@ Frame2= zeros(Row,Col,RGB);
              Frame1(i+1, j-1) = 1; 
              Frame1(i+1, j) = 1;
              Frame1(i+1, j+1) = 1;
-             else
+        else
              Frame1(i, j) = 0;
              Frame1(i, j-1) = 0;
              Frame1(i, j+1) = 0;
@@ -41,27 +42,25 @@ Frame2= zeros(Row,Col,RGB);
              Frame1(i+1, j-1) = 0; 
              Frame1(i+1, j) = 0;
              Frame1(i+1, j+1) = 0;
-             end
+        end
     end
-  end
-  
-    for j=1:1    
-       for i=1:1
-%           
-           if((edge_mask(i, j) == 1) & ((edge_mask(i, j+1) == 1)|(edge_mask(i+1, j) == 1)|(edge_mask(i+1,j+1) == 1)))
+end
+
+for j=1:1
+    for i=1:1
+        if((edge_mask(i, j) == 1)||((edge_mask(i, j+1) == 1)||(edge_mask(i+1, j) == 1)||(edge_mask(i+1,j+1) == 1)))
                Frame1(i, j) = 1; 
                Frame1(i, j+1) =1;
                Frame1(i+1, j) =1;
                Frame1(i+1,j+1) =1;
-           else
+        else
                Frame1(i, j)= 0; 
                Frame1(i, j+1)=0;
                Frame1(i+1, j)=0;
                Frame1(i+1,j+1)=0;
-           end
-               
-       end
+        end
     end
+end
 %   counter=0;
 %    for j=1:Col    
 %     for i=1:Row
@@ -76,24 +75,22 @@ iCAM_img = iCAM06_HDR(im, 20000, 0.7, 1);
 iCAM_img = double(iCAM_img)/255.0;
 ward_img = WardHistAdjTMO(im);
 
-
-   for j=1:Col    
+for j=1:Col
     for i=1:Row
-        
-             if(Frame1(i,j) == 1)
-                Frame2(i,j,:)= iCAM_img(i,j,:);
-             else
-                Frame2(i,j,:)= ward_img(i,j,:); 
-             end
-    end 
-   end 
+        if(Frame1(i,j) == 1)
+            Frame2(i,j,:)= iCAM_img(i,j,:);
+        else
+            Frame2(i,j,:)= ward_img(i,j,:);
+        end
+    end
+end
     
 figure;
 imshow(Frame1);
-title('sectored Image');
+title('Sectored Image');
 
 figure;
 imshow(Frame2);
-title('Hibrid Image');
+title('Hybrid Image');
 
 
