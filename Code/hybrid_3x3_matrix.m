@@ -3,7 +3,7 @@ close all;
 clear all;
 
 %im = hdrimread('Bottles_Small.hdr');
-im = hdrimread('/Users/calvinching/Documents/ubc/eece_541/project/HDRImages/bistro_01/bistro_01_000295.hdr');
+im = hdrimread('bistro_01_000295.hdr');
 luminance = lum(im);
 
 figure;
