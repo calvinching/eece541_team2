@@ -10,8 +10,8 @@ figure;
 imshow(im);
 title('Original Image');
 
-edge_mask = edge(luminance, 'canny');
-
+[edge_mask, dir] = edge(luminance, 'canny');
+deg = radtodeg(dir);
 figure('Name', 'Edge Mask'),imshow(edge_mask);
 
 [Row, Col, RGB]=size(im);
