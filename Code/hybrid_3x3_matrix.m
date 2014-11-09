@@ -2,7 +2,7 @@
 close all;
 clear all;
 
-tileSize = 5;
+tileSize = 3;
 
 %load original image
 im = hdrimread('bistro_01_000295.hdr');
@@ -48,76 +48,79 @@ disp(sprintf('The largest element in deg matrix is %f at (%d,%d).', v1, ind(ind1
 
 
 %3x3 masking of the edge 
-for j=2:1:Col-1
-    for i=2:1:Row-1
-        if((edge_mask(i,j) == 1)||((edge_mask(i,j-1) == 1)||(edge_mask(i,j+1) == 1)||(edge_mask(i-1,j-1) == 1)||(edge_mask(i-1,j) == 1)||(edge_mask(i-1,j+1) == 1)||(edge_mask(i+1,j-1) == 1)||(edge_mask(i+1,j) == 1)||(edge_mask(i+1,j+1) == 1)))
-            r = randi([1,9],1,2);
-            if (r(1,1) == 1 || r(1,2) == 1)
-                edgeExpand(i,j) = 1;
-            end
-            if (r(1,1) == 2 || r(1,2) == 2)
-                edgeExpand(i,j-1) = 1;
-            end
-            if (r(1,1) == 3 || r(1,2) == 3)
-                edgeExpand(i,j+1) = 1;
-            end
-            if (r(1,1) == 4 || r(1,2) == 4)
-                edgeExpand(i-1,j-1) =1;
-            end
-            if (r(1,1) == 5 || r(1,2) == 5)
-                edgeExpand(i-1,j) = 1;
-            end
-            if (r(1,1) == 6 || r(1,2) == 6)
-                edgeExpand(i-1,j+1) =1;
-            end
-            if (r(1,1) == 7 || r(1,2) == 7)
-                edgeExpand(i+1,j-1) = 1;
-            end
-            if (r(1,1) == 8 || r(1,2) == 8)
-                edgeExpand(i+1,j) = 1;
-            end
-            if (r(1,1) == 9 || r(1,2) == 9)
-                edgeExpand(i+1,j+1) = 1;
-            end
-        else
-             edgeExpand(i,j) = 0;
-             edgeExpand(i,j-1) = 0;
-             edgeExpand(i,j+1) = 0;
-             edgeExpand(i-1,j-1) = 0;
-             edgeExpand(i-1,j) = 0;
-             edgeExpand(i-1,j+1) = 0;
-             edgeExpand(i+1,j-1) = 0; 
-             edgeExpand(i+1,j) = 0;
-             edgeExpand(i+1,j+1) = 0;
-        end
-    end
-end
-
-for j=1:2
-    for i=1:1
-        if((edge_mask(i,j) == 1)||((edge_mask(i,j+1) == 1)||(edge_mask(i+1,j) == 1)||(edge_mask(i+1,j+1) == 1)))
-               edgeExpand(i,j) = 1; 
-               edgeExpand(i,j+1) =1;
-               edgeExpand(i+1,j) =1;
-               edgeExpand(i+1,j+1) =1;
-        else
-               edgeExpand(i,j)= 0; 
-               edgeExpand(i,j+1)=0;
-               edgeExpand(i+1,j)=0;
-               edgeExpand(i+1,j+1)=0;
-        end
-    end
-end
+% for j=2:1:Col-1
+%     for i=2:1:Row-1
+%         if((edge_mask(i,j) == 1)&&((edge_mask(i,j-1) == 1)||(edge_mask(i,j+1) == 1)||(edge_mask(i-1,j-1) == 1)||(edge_mask(i-1,j) == 1)||(edge_mask(i-1,j+1) == 1)||(edge_mask(i+1,j-1) == 1)||(edge_mask(i+1,j) == 1)||(edge_mask(i+1,j+1) == 1)))
+%             r = randi([1,9],1,2);
+%             if (r(1,1) ~= 1 && r(1,2) ~= 1)
+%                 edgeExpand(i,j) = 1;
+%             end
+%             if (r(1,1) ~= 2 && r(1,2) ~= 2)
+%                 edgeExpand(i,j-1) = 1;
+%             end
+%             if (r(1,1) ~= 3 && r(1,2) ~= 3)
+%                 edgeExpand(i,j+1) = 1;
+%             end
+%             if (r(1,1) ~= 4 && r(1,2) ~= 4)
+%                 edgeExpand(i-1,j-1) =1;
+%             end
+%             if (r(1,1) ~= 5 && r(1,2) ~= 5)
+%                 edgeExpand(i-1,j) = 1;
+%             end
+%             if (r(1,1) ~= 6 && r(1,2) ~= 6)
+%                 edgeExpand(i-1,j+1) =1;
+%             end
+%             if (r(1,1) ~= 7 && r(1,2) ~= 7)
+%                 edgeExpand(i+1,j-1) = 1;
+%             end
+%             if (r(1,1) ~= 8 && r(1,2) ~= 8)
+%                 edgeExpand(i+1,j) = 1;
+%             end
+%             if (r(1,1) ~= 9 && r(1,2) ~= 9)
+%                 edgeExpand(i+1,j+1) = 1;
+%             end
+%         else
+%              edgeExpand(i,j) = 0;
+%              edgeExpand(i,j-1) = 0;
+%              edgeExpand(i,j+1) = 0;
+%              edgeExpand(i-1,j-1) = 0;
+%              edgeExpand(i-1,j) = 0;
+%              edgeExpand(i-1,j+1) = 0;
+%              edgeExpand(i+1,j-1) = 0;
+%              edgeExpand(i+1,j) = 0;
+%              edgeExpand(i+1,j+1) = 0;
+%         end
+%     end
+% end
+%
+% for j=1:2
+%     for i=1:1
+%         if((edge_mask(i,j) == 1)||((edge_mask(i,j+1) == 1)||(edge_mask(i+1,j) == 1)||(edge_mask(i+1,j+1) == 1)))
+%                edgeExpand(i,j) = 1;
+%                edgeExpand(i,j+1) =1;
+%                edgeExpand(i+1,j) =1;
+%                edgeExpand(i+1,j+1) =1;
+%         else
+%                edgeExpand(i,j)= 0;
+%                edgeExpand(i,j+1)=0;
+%                edgeExpand(i+1,j)=0;
+%                edgeExpand(i+1,j+1)=0;
+%         end
+%     end
+% end
 
 %apply iCAM and Ward TMO to original image
 iCAM_img = iCAM06_HDR(im, 20000, 0.7, 1);
 iCAM_img = double(iCAM_img)/255.0;
 ward_img = WardHistAdjTMO(im, 5);
 
+figure('Name', 'Ward'),imshow(ward_img);
+figure('Name', 'iCAM'),imshow(iCAM_img);
+
 %generate final image based on expanded edge mask with weighting
 for j=1:Col
     for i=1:Row
-        if(edgeExpand(i,j) == 1)
+        if(edge_mask(i,j) == 1)
             imageOut(i,j,:) = (0.90)*iCAM_img(i,j,:) + (0.1)*ward_img(i,j,:);
         else
             imageOut(i,j,:) = (0.80)*ward_img(i,j,:) + (0.20)*iCAM_img(i,j,:);
@@ -125,7 +128,9 @@ for j=1:Col
     end
 end
 
-%smoothing algorithm 
+figure('Name', 'Unsmoothed Image'),imshow(imageOut);
+
+%smoothing algorithm
 for j=1:1:Col
     %check for pixels around left & right border of the image
     if j < tileSize + 1
@@ -145,7 +150,7 @@ for j=1:1:Col
             ilimit = tileSize;
         end
         %check edge bitmask to find edges (e.g. edgeExpand == 1)
-        if edgeExpand(i,j) == 1
+        if edge_mask(i,j) == 1
             angle = deg(i,j);
             mode = ceil(angle/45);
             switch mode
@@ -154,7 +159,7 @@ for j=1:1:Col
                     %loop for cone area generation for smoothing
                     for m=(j+1):1:(j + jlimit)
                         coneLayer = coneLayer + 1;
-                        factor = coneLayer * 0.2;
+                        factor = coneLayer * (1/tileSize);
                         for n=(i - coneLayer):1:(i + coneLayer)
                             if modified(n,m) == 0;
                                 imageOut(n,m,:) = (((1-factor)^2)*iCAM_img(n,m,:) + (1-(1-factor)^2)*ward_img(n,m,:));
@@ -165,6 +170,25 @@ for j=1:1:Col
                         end
                     end
                 case 2
+                    coneLayer = 0;
+                    %loop for cone area generation for smoothing
+                    for windowCol=j:1:(j + jlimit)
+                        for windowRow=i:-1:(i - ilimit)
+                            if (windowRow~=i || windowCol~=j)
+                                coneLayer = windowCol-j;
+                                if (windowCol-j < i-windowRow)
+                                    coneLayer = i-windowRow;
+                                end
+                                factor = coneLayer * (1/tileSize);
+                                if modified(windowRow,windowCol) == 0;
+                                    imageOut(windowRow,windowCol,:) = (((1-factor)^2)*iCAM_img(windowRow,windowCol,:) + (1-(1-factor)^2)*ward_img(windowRow,windowCol,:));
+                                    modified(windowRow,windowCol) = 1;
+                                else
+                                    imageOut(windowRow,windowCol,:)= ((((1-factor)^2)*iCAM_img(windowRow,windowCol,:) + (1-(1-factor)^2)*ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
+                                end
+                            end
+                        end
+                    end
                 case 3
                 case 4
                 case 5
@@ -176,7 +200,5 @@ for j=1:1:Col
     end
 end
 
-figure('Name', 'Sectored image'),imshow(edgeExpand);
+%figure('Name', 'Sectored image'),imshow(edgeExpand);
 figure('Name', 'Hybrid image'),imshow(imageOut);
-figure('Name', 'Ward'),imshow(ward_img);
-figure('Name', 'iCAM'),imshow(iCAM_img);
