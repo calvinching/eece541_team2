@@ -1,8 +1,8 @@
-
+ 
 close all;
 clear all;
 
-tileSize = 1;
+tileSize = 5;
 
 %load original image
 im = hdrimread('bistro_01_000295.hdr');
@@ -152,12 +152,12 @@ for j=1:1:Col
                 case 1
                     coneLayer = 0;
                     %loop for cone area generation for smoothing
-                    for m=(j-1):-1:(j - jlimit)
+                    for m=(j+1):1:(j + jlimit)
                         coneLayer = coneLayer + 1;
                         factor = coneLayer * 0.2;
                         for n=(i - coneLayer):1:(i + coneLayer)
                             if modified(n,m) == 0;
-                                imageOut(n,m,:) = (((1-factor)^2)*iCAM_img(n,m,:) + (1-(1-factor)^2)*ward_img(n,m,:) + imageOut(n,m,:)) / 2;
+                                imageOut(n,m,:) = (((1-factor)^2)*iCAM_img(n,m,:) + (1-(1-factor)^2)*ward_img(n,m,:));
                                 modified(n,m) = 1;
                             else
                                 imageOut(n,m,:)= ((((1-factor)^2)*iCAM_img(n,m,:) + (1-(1-factor)^2)*ward_img(n,m,:)) + imageOut(n,m,:)) / 2;
