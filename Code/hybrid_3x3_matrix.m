@@ -154,30 +154,30 @@ for j=1:1:Col
             angle = deg(i,j);
             mode = ceil(angle/45);
             switch mode
-                case 1
+                case 1 % 1 - 45 degrees
                     coneLayer = 0;
                     %loop for cone area generation for smoothing
-                    for m=(j+1):1:(j + jlimit)
+                    for windowCol=(j+1):1:(j+jlimit)
                         coneLayer = coneLayer + 1;
                         factor = coneLayer * (1/tileSize);
-                        for n=(i - coneLayer):1:(i + coneLayer)
-                            if modified(n,m) == 0;
-                                imageOut(n,m,:) = (((1-factor)^2)*iCAM_img(n,m,:) + (1-(1-factor)^2)*ward_img(n,m,:));
-                                modified(n,m) = 1;
+                        for windowRow=(i-coneLayer):1:(i+coneLayer)
+                            if modified(windowRow,windowCol) == 0;
+                                imageOut(windowRow,windowCol,:) = (((1-factor)^2)*iCAM_img(windowRow,windowCol,:) + (1-(1-factor)^2)*ward_img(windowRow,windowCol,:));
+                                modified(windowRow,windowCol) = 1;
                             else
-                                imageOut(n,m,:)= ((((1-factor)^2)*iCAM_img(n,m,:) + (1-(1-factor)^2)*ward_img(n,m,:)) + imageOut(n,m,:)) / 2;
+                                imageOut(windowRow,windowCol,:)= ((((1-factor)^2)*iCAM_img(windowRow,windowCol,:) + (1-(1-factor)^2)*ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
                             end
                         end
                     end
-                case 2
+                case 2 % 46 - 90 degrees
                     coneLayer = 0;
                     %loop for cone area generation for smoothing
-                    for windowCol=j:1:(j + jlimit)
-                        for windowRow=i:-1:(i - ilimit)
+                    for windowCol=j:1:(j+jlimit)
+                        for windowRow=i:1:(i+ilimit)
                             if (windowRow~=i || windowCol~=j)
-                                coneLayer = windowCol-j;
-                                if (windowCol-j < i-windowRow)
-                                    coneLayer = i-windowRow;
+                                coneLayer = windowCol - j;
+                                if (windowCol-j < windowRow-i)
+                                    coneLayer = windowRow - i;
                                 end
                                 factor = coneLayer * (1/tileSize);
                                 if modified(windowRow,windowCol) == 0;
@@ -189,13 +189,114 @@ for j=1:1:Col
                             end
                         end
                     end
-                case 3
-                case 4
-                case 5
-                case 6
-                case 7
-                case 8   
-            end     
+                case 3 % 91 - 135 degrees
+                    coneLayer = 0;
+                    %loop for cone area generation for smoothing
+                    for windowRow=(i+1):1:(i+ilimit)
+                        coneLayer = coneLayer + 1;
+                        factor = coneLayer * (1/tileSize);
+                        for windowCol=(j-coneLayer):1:(j+coneLayer)
+                            if modified(windowRow,windowCol) == 0;
+                                imageOut(windowRow,windowCol,:) = (((1-factor)^2)*iCAM_img(windowRow,windowCol,:) + (1-(1-factor)^2)*ward_img(windowRow,windowCol,:));
+                                modified(windowRow,windowCol) = 1;
+                            else
+                                imageOut(windowRow,windowCol,:)= ((((1-factor)^2)*iCAM_img(windowRow,windowCol,:) + (1-(1-factor)^2)*ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
+                            end
+                        end
+                    end
+                case 4 % 136 - 180 degrees
+                    coneLayer = 0;
+                    %loop for cone area generation for smoothing
+                    for windowCol=j:-1:(j-jlimit)
+                        for windowRow=i:1:(i+ilimit)
+                            if (windowRow~=i || windowCol~=j)
+                                coneLayer = j - windowCol;
+                                if (j-windowCol < windowRow-i)
+                                    coneLayer = windowRow - i;
+                                end
+                                factor = coneLayer * (1/tileSize);
+                                if modified(windowRow,windowCol) == 0;
+                                    imageOut(windowRow,windowCol,:) = (((1-factor)^2)*iCAM_img(windowRow,windowCol,:) + (1-(1-factor)^2)*ward_img(windowRow,windowCol,:));
+                                    modified(windowRow,windowCol) = 1;
+                                else
+                                    imageOut(windowRow,windowCol,:)= ((((1-factor)^2)*iCAM_img(windowRow,windowCol,:) + (1-(1-factor)^2)*ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
+                                end
+                            end
+                        end
+                    end
+                case 5 % 181 - 225 degrees
+                    coneLayer = 0;
+                    %loop for cone area generation for smoothing
+                    for windowCol=(j-1):-1:(j-jlimit)
+                        coneLayer = coneLayer + 1;
+                        factor = coneLayer * (1/tileSize);
+                        for windowRow=(i-coneLayer):1:(i+coneLayer)
+                            if modified(windowRow,windowCol) == 0;
+                                imageOut(windowRow,windowCol,:) = (((1-factor)^2)*iCAM_img(windowRow,windowCol,:) + (1-(1-factor)^2)*ward_img(windowRow,windowCol,:));
+                                modified(windowRow,windowCol) = 1;
+                            else
+                                imageOut(windowRow,windowCol,:)= ((((1-factor)^2)*iCAM_img(windowRow,windowCol,:) + (1-(1-factor)^2)*ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
+                            end
+                        end
+                    end
+                case 6 % 226 - 270 degrees
+                    coneLayer = 0;
+                    %loop for cone area generation for smoothing
+                    for windowCol=j:-1:(j-jlimit)
+                        for windowRow=i:-1:(i-ilimit)
+                            if (windowRow~=i || windowCol~=j)
+                                coneLayer = j - windowCol;
+                                if (j-windowCol < i-windowRow)
+                                    coneLayer = i - windowRow;
+                                end
+                                factor = coneLayer * (1/tileSize);
+                                if modified(windowRow,windowCol) == 0;
+                                    imageOut(windowRow,windowCol,:) = (((1-factor)^2)*iCAM_img(windowRow,windowCol,:) + (1-(1-factor)^2)*ward_img(windowRow,windowCol,:));
+                                    modified(windowRow,windowCol) = 1;
+                                else
+                                    imageOut(windowRow,windowCol,:)= ((((1-factor)^2)*iCAM_img(windowRow,windowCol,:) + (1-(1-factor)^2)*ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
+                                end
+                            end
+                        end
+                    end
+                case 7 % 271 - 315 degrees
+                    coneLayer = 0;
+                    %loop for cone area generation for smoothing
+                    for windowRow=(i-1):1:(i-ilimit)
+                        coneLayer = coneLayer + 1;
+                        factor = coneLayer * (1/tileSize);
+                        for windowCol=(j-coneLayer):1:(j+coneLayer)
+                            if modified(windowRow,windowCol) == 0;
+                                imageOut(windowRow,windowCol,:) = (((1-factor)^2)*iCAM_img(windowRow,windowCol,:) + (1-(1-factor)^2)*ward_img(windowRow,windowCol,:));
+                                modified(windowRow,windowCol) = 1;
+                            else
+                                imageOut(windowRow,windowCol,:)= ((((1-factor)^2)*iCAM_img(windowRow,windowCol,:) + (1-(1-factor)^2)*ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
+                            end
+                        end
+                    end
+                case 8 % 316 - 360 degrees
+                    coneLayer = 0;
+                    %loop for cone area generation for smoothing
+                    for windowCol=j:1:(j + jlimit)
+                        for windowRow=i:-1:(i - ilimit)
+                            if (windowRow~=i || windowCol~=j)
+                                coneLayer = windowCol - j;
+                                if (windowCol-j < i-windowRow)
+                                    coneLayer = i - windowRow;
+                                end
+                                factor = coneLayer * (1/tileSize);
+                                if modified(windowRow,windowCol) == 0;
+                                    imageOut(windowRow,windowCol,:) = (((1-factor)^2)*iCAM_img(windowRow,windowCol,:) + (1-(1-factor)^2)*ward_img(windowRow,windowCol,:));
+                                    modified(windowRow,windowCol) = 1;
+                                else
+                                    imageOut(windowRow,windowCol,:)= ((((1-factor)^2)*iCAM_img(windowRow,windowCol,:) + (1-(1-factor)^2)*ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
+                                end
+                            end
+                        end
+                    end
+                otherwise
+                    disp('Angle not classified into a mode!');
+            end
         end
     end
 end
