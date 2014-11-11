@@ -2,7 +2,7 @@
 close all;
 clear all;
 
-tileSize = 3;
+tileSize = 5;
 
 %load original image
 im = hdrimread('bistro_01_000295.hdr');
@@ -117,13 +117,15 @@ ward_img = WardHistAdjTMO(im, 5);
 figure('Name', 'Ward'),imshow(ward_img);
 figure('Name', 'iCAM'),imshow(iCAM_img);
 
+edge_weight = 0.75;
+
 %generate final image based on expanded edge mask with weighting
 for j=1:Col
     for i=1:Row
         if(edge_mask(i,j) == 1)
-            imageOut(i,j,:) = (0.90)*iCAM_img(i,j,:) + (0.1)*ward_img(i,j,:);
+            imageOut(i,j,:) = edge_weight*iCAM_img(i,j,:) + (1-edge_weight)*ward_img(i,j,:);
         else
-            imageOut(i,j,:) = (0.80)*ward_img(i,j,:) + (0.20)*iCAM_img(i,j,:);
+            imageOut(i,j,:) = edge_weight*ward_img(i,j,:) + (1-edge_weight)*iCAM_img(i,j,:);
         end
     end
 end
@@ -159,13 +161,16 @@ for j=1:1:Col
                     %loop for cone area generation for smoothing
                     for windowCol=(j+1):1:(j+jlimit)
                         coneLayer = coneLayer + 1;
-                        factor = coneLayer * (1/tileSize);
+                        factor = coneLayer * ((edge_weight - (1 - edge_weight))/tileSize);
+                        factor = edge_weight - factor;
                         for windowRow=(i-coneLayer):1:(i+coneLayer)
-                            if modified(windowRow,windowCol) == 0;
-                                imageOut(windowRow,windowCol,:) = (((1-factor)^2)*iCAM_img(windowRow,windowCol,:) + (1-(1-factor)^2)*ward_img(windowRow,windowCol,:));
-                                modified(windowRow,windowCol) = 1;
-                            else
-                                imageOut(windowRow,windowCol,:)= ((((1-factor)^2)*iCAM_img(windowRow,windowCol,:) + (1-(1-factor)^2)*ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
+                            if windowRow >= 1 && windowRow <= Row && windowCol >= 1 && windowCol <= Col
+                                if modified(windowRow,windowCol) == 0;
+                                    imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
+                                    modified(windowRow,windowCol) = 1;
+                                else
+                                    imageOut(windowRow,windowCol,:)= ((factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
+                                end
                             end
                         end
                     end
@@ -179,12 +184,15 @@ for j=1:1:Col
                                 if (windowCol-j < windowRow-i)
                                     coneLayer = windowRow - i;
                                 end
-                                factor = coneLayer * (1/tileSize);
-                                if modified(windowRow,windowCol) == 0;
-                                    imageOut(windowRow,windowCol,:) = (((1-factor)^2)*iCAM_img(windowRow,windowCol,:) + (1-(1-factor)^2)*ward_img(windowRow,windowCol,:));
-                                    modified(windowRow,windowCol) = 1;
-                                else
-                                    imageOut(windowRow,windowCol,:)= ((((1-factor)^2)*iCAM_img(windowRow,windowCol,:) + (1-(1-factor)^2)*ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
+                                factor = coneLayer * ((edge_weight - (1 - edge_weight))/tileSize);
+                                factor = edge_weight - factor;
+                                if windowRow >= 1 && windowRow <= Row && windowCol >= 1 && windowCol <= Col
+                                    if modified(windowRow,windowCol) == 0;
+                                        imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
+                                        modified(windowRow,windowCol) = 1;
+                                    else
+                                        imageOut(windowRow,windowCol,:)= ((factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
+                                    end
                                 end
                             end
                         end
@@ -194,13 +202,16 @@ for j=1:1:Col
                     %loop for cone area generation for smoothing
                     for windowRow=(i+1):1:(i+ilimit)
                         coneLayer = coneLayer + 1;
-                        factor = coneLayer * (1/tileSize);
+                        factor = coneLayer * ((edge_weight - (1 - edge_weight))/tileSize);
+                        factor = edge_weight - factor;
                         for windowCol=(j-coneLayer):1:(j+coneLayer)
-                            if modified(windowRow,windowCol) == 0;
-                                imageOut(windowRow,windowCol,:) = (((1-factor)^2)*iCAM_img(windowRow,windowCol,:) + (1-(1-factor)^2)*ward_img(windowRow,windowCol,:));
-                                modified(windowRow,windowCol) = 1;
-                            else
-                                imageOut(windowRow,windowCol,:)= ((((1-factor)^2)*iCAM_img(windowRow,windowCol,:) + (1-(1-factor)^2)*ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
+                            if windowRow >= 1 && windowRow <= Row && windowCol >= 1 && windowCol <= Col
+                                if modified(windowRow,windowCol) == 0;
+                                    imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
+                                    modified(windowRow,windowCol) = 1;
+                                else
+                                    imageOut(windowRow,windowCol,:)= ((factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
+                                end
                             end
                         end
                     end
@@ -214,12 +225,15 @@ for j=1:1:Col
                                 if (j-windowCol < windowRow-i)
                                     coneLayer = windowRow - i;
                                 end
-                                factor = coneLayer * (1/tileSize);
-                                if modified(windowRow,windowCol) == 0;
-                                    imageOut(windowRow,windowCol,:) = (((1-factor)^2)*iCAM_img(windowRow,windowCol,:) + (1-(1-factor)^2)*ward_img(windowRow,windowCol,:));
-                                    modified(windowRow,windowCol) = 1;
-                                else
-                                    imageOut(windowRow,windowCol,:)= ((((1-factor)^2)*iCAM_img(windowRow,windowCol,:) + (1-(1-factor)^2)*ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
+                                factor = coneLayer * ((edge_weight - (1 - edge_weight))/tileSize);
+                                factor = edge_weight - factor;
+                                if windowRow >= 1 && windowRow <= Row && windowCol >= 1 && windowCol <= Col
+                                    if modified(windowRow,windowCol) == 0;
+                                        imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
+                                        modified(windowRow,windowCol) = 1;
+                                    else
+                                        imageOut(windowRow,windowCol,:)= ((factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
+                                    end
                                 end
                             end
                         end
@@ -229,13 +243,16 @@ for j=1:1:Col
                     %loop for cone area generation for smoothing
                     for windowCol=(j-1):-1:(j-jlimit)
                         coneLayer = coneLayer + 1;
-                        factor = coneLayer * (1/tileSize);
+                        factor = coneLayer * ((edge_weight - (1 - edge_weight))/tileSize);
+                        factor = edge_weight - factor;
                         for windowRow=(i-coneLayer):1:(i+coneLayer)
-                            if modified(windowRow,windowCol) == 0;
-                                imageOut(windowRow,windowCol,:) = (((1-factor)^2)*iCAM_img(windowRow,windowCol,:) + (1-(1-factor)^2)*ward_img(windowRow,windowCol,:));
-                                modified(windowRow,windowCol) = 1;
-                            else
-                                imageOut(windowRow,windowCol,:)= ((((1-factor)^2)*iCAM_img(windowRow,windowCol,:) + (1-(1-factor)^2)*ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
+                            if windowRow >= 1 && windowRow <= Row && windowCol >= 1 && windowCol <= Col
+                                if modified(windowRow,windowCol) == 0;
+                                    imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
+                                    modified(windowRow,windowCol) = 1;
+                                else
+                                    imageOut(windowRow,windowCol,:)= ((factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
+                                end
                             end
                         end
                     end
@@ -249,12 +266,15 @@ for j=1:1:Col
                                 if (j-windowCol < i-windowRow)
                                     coneLayer = i - windowRow;
                                 end
-                                factor = coneLayer * (1/tileSize);
-                                if modified(windowRow,windowCol) == 0;
-                                    imageOut(windowRow,windowCol,:) = (((1-factor)^2)*iCAM_img(windowRow,windowCol,:) + (1-(1-factor)^2)*ward_img(windowRow,windowCol,:));
-                                    modified(windowRow,windowCol) = 1;
-                                else
-                                    imageOut(windowRow,windowCol,:)= ((((1-factor)^2)*iCAM_img(windowRow,windowCol,:) + (1-(1-factor)^2)*ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
+                                factor = coneLayer * ((edge_weight - (1 - edge_weight))/tileSize);
+                                factor = edge_weight - factor;
+                                if windowRow >= 1 && windowRow <= Row && windowCol >= 1 && windowCol <= Col
+                                    if modified(windowRow,windowCol) == 0;
+                                        imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
+                                        modified(windowRow,windowCol) = 1;
+                                    else
+                                        imageOut(windowRow,windowCol,:)= ((factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
+                                    end
                                 end
                             end
                         end
@@ -264,13 +284,16 @@ for j=1:1:Col
                     %loop for cone area generation for smoothing
                     for windowRow=(i-1):1:(i-ilimit)
                         coneLayer = coneLayer + 1;
-                        factor = coneLayer * (1/tileSize);
+                        factor = coneLayer * ((edge_weight - (1 - edge_weight))/tileSize);
+                        factor = edge_weight - factor;
                         for windowCol=(j-coneLayer):1:(j+coneLayer)
-                            if modified(windowRow,windowCol) == 0;
-                                imageOut(windowRow,windowCol,:) = (((1-factor)^2)*iCAM_img(windowRow,windowCol,:) + (1-(1-factor)^2)*ward_img(windowRow,windowCol,:));
-                                modified(windowRow,windowCol) = 1;
-                            else
-                                imageOut(windowRow,windowCol,:)= ((((1-factor)^2)*iCAM_img(windowRow,windowCol,:) + (1-(1-factor)^2)*ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
+                            if windowRow >= 1 && windowRow <= Row && windowCol >= 1 && windowCol <= Col
+                                if modified(windowRow,windowCol) == 0;
+                                    imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
+                                    modified(windowRow,windowCol) = 1;
+                                else
+                                    imageOut(windowRow,windowCol,:)= ((factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
+                                end
                             end
                         end
                     end
@@ -284,12 +307,15 @@ for j=1:1:Col
                                 if (windowCol-j < i-windowRow)
                                     coneLayer = i - windowRow;
                                 end
-                                factor = coneLayer * (1/tileSize);
-                                if modified(windowRow,windowCol) == 0;
-                                    imageOut(windowRow,windowCol,:) = (((1-factor)^2)*iCAM_img(windowRow,windowCol,:) + (1-(1-factor)^2)*ward_img(windowRow,windowCol,:));
-                                    modified(windowRow,windowCol) = 1;
-                                else
-                                    imageOut(windowRow,windowCol,:)= ((((1-factor)^2)*iCAM_img(windowRow,windowCol,:) + (1-(1-factor)^2)*ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
+                                factor = coneLayer * ((edge_weight - (1 - edge_weight))/tileSize);
+                                factor = edge_weight - factor;
+                                if windowRow >= 1 && windowRow <= Row && windowCol >= 1 && windowCol <= Col
+                                    if modified(windowRow,windowCol) == 0;
+                                        imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
+                                        modified(windowRow,windowCol) = 1;
+                                    else
+                                        imageOut(windowRow,windowCol,:)= ((factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
+                                    end
                                 end
                             end
                         end
