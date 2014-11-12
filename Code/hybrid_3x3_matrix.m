@@ -47,7 +47,7 @@ end
 disp(sprintf('The largest element in deg matrix is %f at (%d,%d).', v1, ind(ind1), ind1 ));
 
 
-%3x3 masking of the edge 
+% 3x3 masking of the edge
 % for j=2:1:Col-1
 %     for i=2:1:Row-1
 %         if((edge_mask(i,j) == 1)&&((edge_mask(i,j-1) == 1)||(edge_mask(i,j+1) == 1)||(edge_mask(i-1,j-1) == 1)||(edge_mask(i-1,j) == 1)||(edge_mask(i-1,j+1) == 1)||(edge_mask(i+1,j-1) == 1)||(edge_mask(i+1,j) == 1)||(edge_mask(i+1,j+1) == 1)))
@@ -108,28 +108,46 @@ disp(sprintf('The largest element in deg matrix is %f at (%d,%d).', v1, ind(ind1
 %         end
 %     end
 % end
-
 %apply iCAM and Ward TMO to original image
-iCAM_img = iCAM06_HDR(im, 20000, 0.7, 1);
-iCAM_img = double(iCAM_img)/255.0;
+
 ward_img = WardHistAdjTMO(im, 5);
+ward_img_uint8 = im2uint8(ward_img);
+iCAM_img_uint8 = iCAM06_HDR(im, 20000, 0.7, 1);
+iCAM_img = double(iCAM_img_uint8)/255.0;
 
 figure('Name', 'Ward'),imshow(ward_img);
 figure('Name', 'iCAM'),imshow(iCAM_img);
 
-edge_weight = 0.75;
+edge_weight_mask = zeros(Row,Col);
+
+lum_iCAM = lum(iCAM_img_uint8);
+lum_ward = lum(ward_img_uint8);
+lum_iCAM = double(lum_iCAM);
+lum_ward = double(lum_ward);
+
+diff = abs(lum_iCAM - lum_ward);
+[max_diff, loc_diff] = max(diff(:));
 
 %generate final image based on expanded edge mask with weighting
 for j=1:Col
     for i=1:Row
+        % Calculate edge weight based on difference between the luminance
+        % of iCAM and Ward. The edge_weight should be between 1.0 and 0.5.
+        % Right now, it's a linear inverse relationship between edge_weight
+        % and difference.
+        edge_weight = -(diff(i,j)/(max_diff * 2)) + 1.0;
         if(edge_mask(i,j) == 1)
             imageOut(i,j,:) = edge_weight*iCAM_img(i,j,:) + (1-edge_weight)*ward_img(i,j,:);
         else
             imageOut(i,j,:) = edge_weight*ward_img(i,j,:) + (1-edge_weight)*iCAM_img(i,j,:);
         end
+        edge_weight_mask(i,j) = edge_weight;
     end
 end
 
+% i_R = imageOut(:,:,1);
+% i_G = imageOut(:,:,2);
+% i_B = imageOut(:,:,3);
 figure('Name', 'Unsmoothed Image'),imshow(imageOut);
 
 %smoothing algorithm
@@ -161,10 +179,10 @@ for j=1:1:Col
                     %loop for cone area generation for smoothing
                     for windowCol=(j+1):1:(j+jlimit)
                         coneLayer = coneLayer + 1;
-                        factor = coneLayer * ((edge_weight - (1 - edge_weight))/tileSize);
-                        factor = edge_weight - factor;
                         for windowRow=(i-coneLayer):1:(i+coneLayer)
                             if windowRow >= 1 && windowRow <= Row && windowCol >= 1 && windowCol <= Col
+                                edge_weight = edge_weight_mask(windowRow,windowCol);
+                                factor = edge_weight - (coneLayer * ((edge_weight - (1 - edge_weight))/tileSize));
                                 if modified(windowRow,windowCol) == 0;
                                     imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
                                     modified(windowRow,windowCol) = 1;
@@ -184,9 +202,9 @@ for j=1:1:Col
                                 if (windowCol-j < windowRow-i)
                                     coneLayer = windowRow - i;
                                 end
-                                factor = coneLayer * ((edge_weight - (1 - edge_weight))/tileSize);
-                                factor = edge_weight - factor;
                                 if windowRow >= 1 && windowRow <= Row && windowCol >= 1 && windowCol <= Col
+                                    edge_weight = edge_weight_mask(windowRow,windowCol);
+                                    factor = edge_weight - (coneLayer * ((edge_weight - (1 - edge_weight))/tileSize));
                                     if modified(windowRow,windowCol) == 0;
                                         imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
                                         modified(windowRow,windowCol) = 1;
@@ -202,10 +220,10 @@ for j=1:1:Col
                     %loop for cone area generation for smoothing
                     for windowRow=(i+1):1:(i+ilimit)
                         coneLayer = coneLayer + 1;
-                        factor = coneLayer * ((edge_weight - (1 - edge_weight))/tileSize);
-                        factor = edge_weight - factor;
                         for windowCol=(j-coneLayer):1:(j+coneLayer)
                             if windowRow >= 1 && windowRow <= Row && windowCol >= 1 && windowCol <= Col
+                                edge_weight = edge_weight_mask(windowRow,windowCol);
+                                factor = edge_weight - (coneLayer * ((edge_weight - (1 - edge_weight))/tileSize));
                                 if modified(windowRow,windowCol) == 0;
                                     imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
                                     modified(windowRow,windowCol) = 1;
@@ -225,9 +243,9 @@ for j=1:1:Col
                                 if (j-windowCol < windowRow-i)
                                     coneLayer = windowRow - i;
                                 end
-                                factor = coneLayer * ((edge_weight - (1 - edge_weight))/tileSize);
-                                factor = edge_weight - factor;
                                 if windowRow >= 1 && windowRow <= Row && windowCol >= 1 && windowCol <= Col
+                                    edge_weight = edge_weight_mask(windowRow,windowCol);
+                                    factor = edge_weight - (coneLayer * ((edge_weight - (1 - edge_weight))/tileSize));
                                     if modified(windowRow,windowCol) == 0;
                                         imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
                                         modified(windowRow,windowCol) = 1;
@@ -243,10 +261,10 @@ for j=1:1:Col
                     %loop for cone area generation for smoothing
                     for windowCol=(j-1):-1:(j-jlimit)
                         coneLayer = coneLayer + 1;
-                        factor = coneLayer * ((edge_weight - (1 - edge_weight))/tileSize);
-                        factor = edge_weight - factor;
                         for windowRow=(i-coneLayer):1:(i+coneLayer)
                             if windowRow >= 1 && windowRow <= Row && windowCol >= 1 && windowCol <= Col
+                                edge_weight = edge_weight_mask(windowRow,windowCol);
+                                factor = edge_weight - (coneLayer * ((edge_weight - (1 - edge_weight))/tileSize));
                                 if modified(windowRow,windowCol) == 0;
                                     imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
                                     modified(windowRow,windowCol) = 1;
@@ -266,9 +284,9 @@ for j=1:1:Col
                                 if (j-windowCol < i-windowRow)
                                     coneLayer = i - windowRow;
                                 end
-                                factor = coneLayer * ((edge_weight - (1 - edge_weight))/tileSize);
-                                factor = edge_weight - factor;
                                 if windowRow >= 1 && windowRow <= Row && windowCol >= 1 && windowCol <= Col
+                                    edge_weight = edge_weight_mask(windowRow,windowCol);
+                                    factor = edge_weight - (coneLayer * ((edge_weight - (1 - edge_weight))/tileSize));
                                     if modified(windowRow,windowCol) == 0;
                                         imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
                                         modified(windowRow,windowCol) = 1;
@@ -284,10 +302,10 @@ for j=1:1:Col
                     %loop for cone area generation for smoothing
                     for windowRow=(i-1):1:(i-ilimit)
                         coneLayer = coneLayer + 1;
-                        factor = coneLayer * ((edge_weight - (1 - edge_weight))/tileSize);
-                        factor = edge_weight - factor;
                         for windowCol=(j-coneLayer):1:(j+coneLayer)
                             if windowRow >= 1 && windowRow <= Row && windowCol >= 1 && windowCol <= Col
+                                edge_weight = edge_weight_mask(windowRow,windowCol);
+                                factor = edge_weight - (coneLayer * ((edge_weight - (1 - edge_weight))/tileSize));
                                 if modified(windowRow,windowCol) == 0;
                                     imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
                                     modified(windowRow,windowCol) = 1;
@@ -307,9 +325,9 @@ for j=1:1:Col
                                 if (windowCol-j < i-windowRow)
                                     coneLayer = i - windowRow;
                                 end
-                                factor = coneLayer * ((edge_weight - (1 - edge_weight))/tileSize);
-                                factor = edge_weight - factor;
                                 if windowRow >= 1 && windowRow <= Row && windowCol >= 1 && windowCol <= Col
+                                    edge_weight = edge_weight_mask(windowRow,windowCol);
+                                    factor = edge_weight - (coneLayer * ((edge_weight - (1 - edge_weight))/tileSize));
                                     if modified(windowRow,windowCol) == 0;
                                         imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
                                         modified(windowRow,windowCol) = 1;
