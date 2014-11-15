@@ -30,7 +30,7 @@ kernel = [10,10,10,10,10,10,10,10,10,10,10;
           10,10,10,10,10,10,10,10,10,10,10];
 
 %edge detection applied to original image
-[edge_mask, dir] = edge(luminance, 'canny');
+[edge_mask, dir] = edge(luminance, 'canny', [0.0000001, 0.055]);
 figure('Name', 'Edge Mask'),imshow(edge_mask);
 
 %convert rad to deg and convert to 0 to 360 degrees
@@ -118,7 +118,7 @@ iCAM_img = double(iCAM_img_uint8)/255.0;
 figure('Name', 'Ward'),imshow(ward_img);
 figure('Name', 'iCAM'),imshow(iCAM_img);
 
-edge_weight_mask = zeros(Row,Col);
+weights = zeros(Row,Col);
 
 lum_iCAM = lum(iCAM_img_uint8);
 lum_ward = lum(ward_img_uint8);
@@ -135,13 +135,13 @@ for j=1:Col
         % of iCAM and Ward. The edge_weight should be between 1.0 and 0.5.
         % Right now, it's a linear inverse relationship between edge_weight
         % and difference.
-        edge_weight = -(diff(i,j)/(max_diff * 2)) + 1.0;
+        weight = -(diff(i,j)/(max_diff * 2)) + 1.0;
         if(edge_mask(i,j) == 1)
-            imageOut(i,j,:) = edge_weight*iCAM_img(i,j,:) + (1-edge_weight)*ward_img(i,j,:);
+            imageOut(i,j,:) = weight*iCAM_img(i,j,:) + (1-weight)*ward_img(i,j,:);
         else
-            imageOut(i,j,:) = edge_weight*ward_img(i,j,:) + (1-edge_weight)*iCAM_img(i,j,:);
+            imageOut(i,j,:) = weight*ward_img(i,j,:) + (1-weight)*iCAM_img(i,j,:);
         end
-        edge_weight_mask(i,j) = edge_weight;
+        weights(i,j) = weight;
     end
 end
 
@@ -181,7 +181,7 @@ for j=1:1:Col
                         coneLayer = coneLayer + 1;
                         for windowRow=(i-coneLayer):1:(i+coneLayer)
                             if windowRow >= 1 && windowRow <= Row && windowCol >= 1 && windowCol <= Col
-                                edge_weight = edge_weight_mask(windowRow,windowCol);
+                                edge_weight = weights(windowRow,windowCol);
                                 factor = edge_weight - (coneLayer * ((edge_weight - (1 - edge_weight))/tileSize));
                                 if modified(windowRow,windowCol) == 0;
                                     imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
@@ -203,7 +203,7 @@ for j=1:1:Col
                                     coneLayer = windowRow - i;
                                 end
                                 if windowRow >= 1 && windowRow <= Row && windowCol >= 1 && windowCol <= Col
-                                    edge_weight = edge_weight_mask(windowRow,windowCol);
+                                    edge_weight = weights(windowRow,windowCol);
                                     factor = edge_weight - (coneLayer * ((edge_weight - (1 - edge_weight))/tileSize));
                                     if modified(windowRow,windowCol) == 0;
                                         imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
@@ -222,7 +222,7 @@ for j=1:1:Col
                         coneLayer = coneLayer + 1;
                         for windowCol=(j-coneLayer):1:(j+coneLayer)
                             if windowRow >= 1 && windowRow <= Row && windowCol >= 1 && windowCol <= Col
-                                edge_weight = edge_weight_mask(windowRow,windowCol);
+                                edge_weight = weights(windowRow,windowCol);
                                 factor = edge_weight - (coneLayer * ((edge_weight - (1 - edge_weight))/tileSize));
                                 if modified(windowRow,windowCol) == 0;
                                     imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
@@ -244,7 +244,7 @@ for j=1:1:Col
                                     coneLayer = windowRow - i;
                                 end
                                 if windowRow >= 1 && windowRow <= Row && windowCol >= 1 && windowCol <= Col
-                                    edge_weight = edge_weight_mask(windowRow,windowCol);
+                                    edge_weight = weights(windowRow,windowCol);
                                     factor = edge_weight - (coneLayer * ((edge_weight - (1 - edge_weight))/tileSize));
                                     if modified(windowRow,windowCol) == 0;
                                         imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
@@ -263,7 +263,7 @@ for j=1:1:Col
                         coneLayer = coneLayer + 1;
                         for windowRow=(i-coneLayer):1:(i+coneLayer)
                             if windowRow >= 1 && windowRow <= Row && windowCol >= 1 && windowCol <= Col
-                                edge_weight = edge_weight_mask(windowRow,windowCol);
+                                edge_weight = weights(windowRow,windowCol);
                                 factor = edge_weight - (coneLayer * ((edge_weight - (1 - edge_weight))/tileSize));
                                 if modified(windowRow,windowCol) == 0;
                                     imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
@@ -285,7 +285,7 @@ for j=1:1:Col
                                     coneLayer = i - windowRow;
                                 end
                                 if windowRow >= 1 && windowRow <= Row && windowCol >= 1 && windowCol <= Col
-                                    edge_weight = edge_weight_mask(windowRow,windowCol);
+                                    edge_weight = weights(windowRow,windowCol);
                                     factor = edge_weight - (coneLayer * ((edge_weight - (1 - edge_weight))/tileSize));
                                     if modified(windowRow,windowCol) == 0;
                                         imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
@@ -304,7 +304,7 @@ for j=1:1:Col
                         coneLayer = coneLayer + 1;
                         for windowCol=(j-coneLayer):1:(j+coneLayer)
                             if windowRow >= 1 && windowRow <= Row && windowCol >= 1 && windowCol <= Col
-                                edge_weight = edge_weight_mask(windowRow,windowCol);
+                                edge_weight = weights(windowRow,windowCol);
                                 factor = edge_weight - (coneLayer * ((edge_weight - (1 - edge_weight))/tileSize));
                                 if modified(windowRow,windowCol) == 0;
                                     imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
@@ -326,7 +326,7 @@ for j=1:1:Col
                                     coneLayer = i - windowRow;
                                 end
                                 if windowRow >= 1 && windowRow <= Row && windowCol >= 1 && windowCol <= Col
-                                    edge_weight = edge_weight_mask(windowRow,windowCol);
+                                    edge_weight = weights(windowRow,windowCol);
                                     factor = edge_weight - (coneLayer * ((edge_weight - (1 - edge_weight))/tileSize));
                                     if modified(windowRow,windowCol) == 0;
                                         imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
