@@ -1,10 +1,9 @@
- 
 close all;
 clear all;
 
-tileSize = 5;
+tileSize = 8;
 
-im_path = 'bistro_02_000219.hdr';
+im_path = 'bistro_01_000295.hdr';
 
 %load original image
 im = hdrimread(im_path);
@@ -16,30 +15,17 @@ figure('Name', 'Original Image'),imshow(im);
 modified = zeros(Row,Col);
 edgeExpand = zeros(Row,Col);
 imageOut = zeros(Row,Col,RGB);
-kernel = zeros(5,5);
-
-%fill kernel with weightings percentage
-kernel = [10,10,10,10,10,10,10,10,10,10,10;
-          10,20,20,20,20,20,20,20,20,20,10;
-          10,20,40,40,40,40,40,40,40,20,10;
-          10,20,40,60,60,60,60,60,40,20,10;
-          10,20,40,60,80,80,80,60,40,20,10;
-          10,20,40,60,80,90,80,60,40,20,10;
-          10,20,40,60,80,80,80,60,40,20,10;
-          10,20,40,60,60,60,60,60,40,20,10;
-          10,20,40,40,40,40,40,40,40,20,10;
-          10,20,20,20,20,20,20,20,20,20,10;
-          10,10,10,10,10,10,10,10,10,10,10];
 
 %edge detection applied to original image
 %[edge_mask, dir] = edge(luminance, 'canny', [0.0000001, 0.055]);
 [edge_mask, dir] = canny_edges(im_path, 1.5, 0.05, 1.0);
 
 g = imread('gradient.bmp');
-
+max_g = max(g(:));
+max_g_threshold = max_g * 0.5;
 for j=1:1:Col
     for i=1:1:Row
-        if (g(i,j) > 120)
+        if (g(i,j) > max_g_threshold)
             edge_mask(i,j) = 1;
         else
             edge_mask(i,j) = 0;
@@ -62,73 +48,13 @@ end
 [v1,ind1]=max(max(deg));
 disp(sprintf('The largest element in deg matrix is %f at (%d,%d).', v1, ind(ind1), ind1 ));
 
-
-% 3x3 masking of the edge
-% for j=2:1:Col-1
-%     for i=2:1:Row-1
-%         if((edge_mask(i,j) == 1)&&((edge_mask(i,j-1) == 1)||(edge_mask(i,j+1) == 1)||(edge_mask(i-1,j-1) == 1)||(edge_mask(i-1,j) == 1)||(edge_mask(i-1,j+1) == 1)||(edge_mask(i+1,j-1) == 1)||(edge_mask(i+1,j) == 1)||(edge_mask(i+1,j+1) == 1)))
-%             r = randi([1,9],1,2);
-%             if (r(1,1) ~= 1 && r(1,2) ~= 1)
-%                 edgeExpand(i,j) = 1;
-%             end
-%             if (r(1,1) ~= 2 && r(1,2) ~= 2)
-%                 edgeExpand(i,j-1) = 1;
-%             end
-%             if (r(1,1) ~= 3 && r(1,2) ~= 3)
-%                 edgeExpand(i,j+1) = 1;
-%             end
-%             if (r(1,1) ~= 4 && r(1,2) ~= 4)
-%                 edgeExpand(i-1,j-1) =1;
-%             end
-%             if (r(1,1) ~= 5 && r(1,2) ~= 5)
-%                 edgeExpand(i-1,j) = 1;
-%             end
-%             if (r(1,1) ~= 6 && r(1,2) ~= 6)
-%                 edgeExpand(i-1,j+1) =1;
-%             end
-%             if (r(1,1) ~= 7 && r(1,2) ~= 7)
-%                 edgeExpand(i+1,j-1) = 1;
-%             end
-%             if (r(1,1) ~= 8 && r(1,2) ~= 8)
-%                 edgeExpand(i+1,j) = 1;
-%             end
-%             if (r(1,1) ~= 9 && r(1,2) ~= 9)
-%                 edgeExpand(i+1,j+1) = 1;
-%             end
-%         else
-%              edgeExpand(i,j) = 0;
-%              edgeExpand(i,j-1) = 0;
-%              edgeExpand(i,j+1) = 0;
-%              edgeExpand(i-1,j-1) = 0;
-%              edgeExpand(i-1,j) = 0;
-%              edgeExpand(i-1,j+1) = 0;
-%              edgeExpand(i+1,j-1) = 0;
-%              edgeExpand(i+1,j) = 0;
-%              edgeExpand(i+1,j+1) = 0;
-%         end
-%     end
-% end
-%
-% for j=1:2
-%     for i=1:1
-%         if((edge_mask(i,j) == 1)||((edge_mask(i,j+1) == 1)||(edge_mask(i+1,j) == 1)||(edge_mask(i+1,j+1) == 1)))
-%                edgeExpand(i,j) = 1;
-%                edgeExpand(i,j+1) =1;
-%                edgeExpand(i+1,j) =1;
-%                edgeExpand(i+1,j+1) =1;
-%         else
-%                edgeExpand(i,j)= 0;
-%                edgeExpand(i,j+1)=0;
-%                edgeExpand(i+1,j)=0;
-%                edgeExpand(i+1,j+1)=0;
-%         end
-%     end
-% end
 %apply iCAM and Ward TMO to original image
+
+max_lum_ori = max(luminance(:));
 
 ward_img = WardHistAdjTMO(im, 5);
 ward_img_uint8 = im2uint8(ward_img);
-iCAM_img_uint8 = iCAM06_HDR(im, 20000, 0.7, 1);
+iCAM_img_uint8 = iCAM06_HDR(im, max_lum_ori, 0.54, 0.8);
 iCAM_img = double(iCAM_img_uint8)/255.0;
 
 figure('Name', 'Ward'),imshow(ward_img);
@@ -202,7 +128,8 @@ for j=1:1:Col
                                 edge_weight = weights(windowRow,windowCol);
                                 factor = edge_weight - (coneLayer * ((edge_weight - (1 - edge_weight))/tileSize));
                                 if modified(windowRow,windowCol) == 0 && edge_mask(windowRow,windowCol) ~= 1;
-                                    imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
+                                    %imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
+                                    imageOut(windowRow,windowCol,:)= ((factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
                                     modified(windowRow,windowCol) = 1;
                                 else
                                     imageOut(windowRow,windowCol,:)= ((factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
@@ -224,7 +151,8 @@ for j=1:1:Col
                                     edge_weight = weights(windowRow,windowCol);
                                     factor = edge_weight - (coneLayer * ((edge_weight - (1 - edge_weight))/tileSize));
                                     if modified(windowRow,windowCol) == 0 && edge_mask(windowRow,windowCol) ~= 1;
-                                        imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
+                                        %imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
+                                        imageOut(windowRow,windowCol,:)= ((factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
                                         modified(windowRow,windowCol) = 1;
                                     else
                                         imageOut(windowRow,windowCol,:)= ((factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
@@ -243,7 +171,8 @@ for j=1:1:Col
                                 edge_weight = weights(windowRow,windowCol);
                                 factor = edge_weight - (coneLayer * ((edge_weight - (1 - edge_weight))/tileSize));
                                 if modified(windowRow,windowCol) == 0 && edge_mask(windowRow,windowCol) ~= 1;
-                                    imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
+                                    % imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
+                                    imageOut(windowRow,windowCol,:)= ((factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
                                     modified(windowRow,windowCol) = 1;
                                 else
                                     imageOut(windowRow,windowCol,:)= ((factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
@@ -265,7 +194,8 @@ for j=1:1:Col
                                     edge_weight = weights(windowRow,windowCol);
                                     factor = edge_weight - (coneLayer * ((edge_weight - (1 - edge_weight))/tileSize));
                                     if modified(windowRow,windowCol) == 0 && edge_mask(windowRow,windowCol) ~= 1;
-                                        imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
+                                        %imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
+                                        imageOut(windowRow,windowCol,:)= ((factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
                                         modified(windowRow,windowCol) = 1;
                                     else
                                         imageOut(windowRow,windowCol,:)= ((factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
@@ -284,7 +214,8 @@ for j=1:1:Col
                                 edge_weight = weights(windowRow,windowCol);
                                 factor = edge_weight - (coneLayer * ((edge_weight - (1 - edge_weight))/tileSize));
                                 if modified(windowRow,windowCol) == 0 && edge_mask(windowRow,windowCol) ~= 1;
-                                    imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
+                                    %imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
+                                    imageOut(windowRow,windowCol,:)= ((factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
                                     modified(windowRow,windowCol) = 1;
                                 else
                                     imageOut(windowRow,windowCol,:)= ((factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
@@ -306,7 +237,8 @@ for j=1:1:Col
                                     edge_weight = weights(windowRow,windowCol);
                                     factor = edge_weight - (coneLayer * ((edge_weight - (1 - edge_weight))/tileSize));
                                     if modified(windowRow,windowCol) == 0 && edge_mask(windowRow,windowCol) ~= 1;
-                                        imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
+                                        %imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
+                                        imageOut(windowRow,windowCol,:)= ((factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
                                         modified(windowRow,windowCol) = 1;
                                     else
                                         imageOut(windowRow,windowCol,:)= ((factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
@@ -325,7 +257,8 @@ for j=1:1:Col
                                 edge_weight = weights(windowRow,windowCol);
                                 factor = edge_weight - (coneLayer * ((edge_weight - (1 - edge_weight))/tileSize));
                                 if modified(windowRow,windowCol) == 0 && edge_mask(windowRow,windowCol) ~= 1;
-                                    imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
+                                    %imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
+                                    imageOut(windowRow,windowCol,:)= ((factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
                                     modified(windowRow,windowCol) = 1;
                                 else
                                     imageOut(windowRow,windowCol,:)= ((factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
@@ -347,7 +280,8 @@ for j=1:1:Col
                                     edge_weight = weights(windowRow,windowCol);
                                     factor = edge_weight - (coneLayer * ((edge_weight - (1 - edge_weight))/tileSize));
                                     if modified(windowRow,windowCol) == 0 && edge_mask(windowRow,windowCol) ~= 1;
-                                        imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
+                                        %imageOut(windowRow,windowCol,:) = factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:);
+                                        imageOut(windowRow,windowCol,:)= ((factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
                                         modified(windowRow,windowCol) = 1;
                                     else
                                         imageOut(windowRow,windowCol,:)= ((factor * iCAM_img(windowRow,windowCol,:) + (1-factor) * ward_img(windowRow,windowCol,:)) + imageOut(windowRow,windowCol,:)) / 2;
@@ -365,3 +299,4 @@ end
 
 %figure('Name', 'Sectored image'),imshow(edgeExpand);
 figure('Name', 'Hybrid image'),imshow(imageOut);
+
