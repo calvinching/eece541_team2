@@ -1,19 +1,17 @@
-close all;
-clear all;
+function outImage = hybrid_3x3_matrix(filename)
 
 tileSize = 8;
 
-im_path = 'bistro_01_000295.hdr';
+im_path = filename;
 
 %load original image
 im = hdrimread(im_path);
 luminance = lum(im);
-figure('Name', 'Original Image'),imshow(im);
+%figure('Name', 'Original Image'),imshow(im);
 
 %initialize required matrix
 [Row, Col, RGB] = size(im);
 modified = zeros(Row,Col);
-edgeExpand = zeros(Row,Col);
 imageOut = zeros(Row,Col,RGB);
 
 %edge detection applied to original image
@@ -33,7 +31,7 @@ for j=1:1:Col
     end
 end
 
-figure('Name', 'Edge Mask'), imshow(edge_mask);
+%figure('Name', 'Edge Mask'), imshow(edge_mask);
 
 %convert rad to deg and convert to 0 to 360 degrees
 deg = radtodeg(dir);
@@ -57,8 +55,8 @@ ward_img_uint8 = im2uint8(ward_img);
 iCAM_img_uint8 = iCAM06_HDR(im, max_lum_ori, 0.54, 0.8);
 iCAM_img = double(iCAM_img_uint8)/255.0;
 
-figure('Name', 'Ward'),imshow(ward_img);
-figure('Name', 'iCAM'),imshow(iCAM_img);
+%figure('Name', 'Ward'),imshow(ward_img);
+%figure('Name', 'iCAM'),imshow(iCAM_img);
 
 weights = zeros(Row,Col);
 
@@ -81,6 +79,7 @@ for j=1:Col
         if(edge_mask(i,j) == 1)
             imageOut(i,j,:) = weight*iCAM_img(i,j,:) + (1-weight)*ward_img(i,j,:);
         else
+            weight = weight * 0.6;
             imageOut(i,j,:) = weight*ward_img(i,j,:) + (1-weight)*iCAM_img(i,j,:);
         end
         weights(i,j) = weight;
@@ -90,7 +89,7 @@ end
 % i_R = imageOut(:,:,1);
 % i_G = imageOut(:,:,2);
 % i_B = imageOut(:,:,3);
-figure('Name', 'Unsmoothed Image'),imshow(imageOut);
+% figure('Name', 'Unsmoothed Image'),imshow(imageOut);
 
 %smoothing algorithm
 for j=1:1:Col
@@ -112,8 +111,6 @@ for j=1:1:Col
         else
             ilimit = tileSize;
         end
-        %check edge bitmask to find edges (e.g. edgeExpand == 1)
-        %if ((edge_mask(i,j) == 1) && ((edge_mask(i,j-1) == 1) && (edge_mask(i,j+1) == 1) && (edge_mask(i-1,j-1) == 1)||(edge_mask(i-1,j) == 1)||(edge_mask(i-1,j+1) == 1)||(edge_mask(i+1,j-1) == 1)||(edge_mask(i+1,j) == 1)||(edge_mask(i+1,j+1) == 1)))
         if edge_mask(i,j) == 1
             angle = deg(i,j);
             mode = ceil(angle/45);
@@ -297,6 +294,6 @@ for j=1:1:Col
     end
 end
 
-%figure('Name', 'Sectored image'),imshow(edgeExpand);
-figure('Name', 'Hybrid image'),imshow(imageOut);
+%figure('Name', 'Hybrid image'),imshow(imageOut);
 
+outImage = imageOut;
