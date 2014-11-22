@@ -6,6 +6,7 @@ function [ imgOut ] = im_contrast( img, contrast )
 
 [Row, Col, RGB] = size(img);
 imgOut = zeros(Row, Col, RGB);
+imgOut = im2uint8(imgOut);
 
 factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
 for j=1:Col

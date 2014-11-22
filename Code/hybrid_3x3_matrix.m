@@ -60,8 +60,8 @@ iCAM_img_uint8 = iCAM06_HDR(im, max_lum_ori, 0.7, 1);
 iCAM_img = double(iCAM_img_uint8)/255.0;
 iCAM_img = GammaTMO(iCAM_img, 2.2, 0, 0);
 
-figure('Name', 'Ward'),imshow(ward_img);
-figure('Name', 'iCAM'),imshow(iCAM_img);
+%figure('Name', 'Ward'),imshow(ward_img);
+%figure('Name', 'iCAM'),imshow(iCAM_img);
 
 % Get the luminance values of the Ward and iCAM images
 lum_iCAM = lum(iCAM_img_uint8);
@@ -95,7 +95,7 @@ end
 % i_R = imageOut(:,:,1);
 % i_G = imageOut(:,:,2);
 % i_B = imageOut(:,:,3);
-figure('Name', 'Unsmoothed Image'),imshow(imageOut);
+%figure('Name', 'Unsmoothed Image'),imshow(imageOut);
 
 % Smoothing algorithm
 for j=1:1:Col
@@ -308,15 +308,15 @@ load('roi2.mat');
 partImg = double(zeros(Row,Col,3));
 partImg2 = double(zeros(Row,Col,3));
 partImg3 = double(zeros(Row,Col,3));
-figure('Name', 'roi'),imshow(roi);
+%figure('Name', 'roi'),imshow(roi);
 
-% se = strel('disk',2);
-% roi2 = imdilate(roi, se);
-% figure('Name', 'roi2'),imshow(roi2);
-% 
-% se = strel('disk',3);
-% roi3 = imdilate(roi2, se);
-% figure('Name', 'roi3'),imshow(roi3);
+se = strel('disk',4);
+roi2 = imdilate(roi, se);
+%figure('Name', 'roi2'),imshow(roi2);
+
+se = strel('disk',6);
+roi3 = imdilate(roi2, se);
+%figure('Name', 'roi3'),imshow(roi3);
 
 % Based on the ROI, grab the partImg
 partImg(:,:,1) = imageOut(:,:,1).*roi;
@@ -324,25 +324,68 @@ partImg(:,:,2) = imageOut(:,:,2).*roi;
 partImg(:,:,3) = imageOut(:,:,3).*roi;
 figure('Name', 'Part img'),imshow(partImg);
 
-% Sharpen partImg
-partImg = imsharpen(partImg, 'Radius', 1.5, 'Amount', 2.5);
-figure('Name', 'Part sharpen'),imshow(partImg);
+% Based on the ROI2, grab the partImg2
+partImg2(:,:,1) = imageOut(:,:,1).*roi2;
+partImg2(:,:,2) = imageOut(:,:,2).*roi2;
+partImg2(:,:,3) = imageOut(:,:,3).*roi2;
+figure('Name', 'Part img 2'),imshow(partImg2);
 
+% Based on the ROI3, grab the partImg3
+partImg3(:,:,1) = imageOut(:,:,1).*roi3;
+partImg3(:,:,2) = imageOut(:,:,2).*roi3;
+partImg3(:,:,3) = imageOut(:,:,3).*roi3;
+figure('Name', 'Part img 3'),imshow(partImg3);
+
+% Sharpen partImg
+partImg = imsharpen(partImg, 'Radius', 1.5, 'Amount', 2.0);
 % Change pixel color format to 0 to 255
 partImg = im2uint8(partImg);
 % Apply contrast to partImg
 partImg = im_contrast(partImg, 50);
+figure('Name', 'Processed part image 1'),imshow(partImg);
 
-figure('Name', 'Contrasted part image'),imshow(partImg);
+% Sharpen partImg2
+partImg2 = imsharpen(partImg2, 'Radius', 1.5, 'Amount', 1.5);
+% Change pixel color format to 0 to 255
+partImg2 = im2uint8(partImg2);
+% Apply contrast to partImg2
+partImg2 = im_contrast(partImg2, 30);
+figure('Name', 'Processed part image 2'),imshow(partImg2);
+
+% Sharpen partImg3
+partImg3 = imsharpen(partImg3, 'Radius', 1.5, 'Amount', 0.75);
+% Change pixel color format to 0 to 255
+partImg3 = im2uint8(partImg3);
+% Apply contrast to partImg3
+partImg3 = im_contrast(partImg3, 10);
+figure('Name', 'Contrasted part image 3'),imshow(partImg3);
 
 % There is a white edge around the processed partImg. We need to get rid of
 % it
-edge_partImg = edge(lum(partImg), 'canny', [0.0000001, 0.55]);
-se = strel('disk',2);
+edge_partImg = edge(lum(partImg), 'canny', [0.0000001, 0.5]);
+se = strel('disk',4);
 edge_partImg = imdilate(edge_partImg, se);
-figure('Name', 'Edge part image'),imshow(edge_partImg);
+figure('Name', 'Edge part image1'),imshow(edge_partImg);
 edge_partImg = ~edge_partImg;
 roi = roi.*edge_partImg;
+
+% There is a white edge around the processed partImg. We need to get rid of
+% it
+edge_partImg2 = edge(lum(partImg2), 'canny', [0.0000001, 0.5]);
+se = strel('disk',3);
+edge_partImg2 = imdilate(edge_partImg2, se);
+figure('Name', 'Edge part image2'),imshow(edge_partImg2);
+edge_partImg2 = ~edge_partImg2;
+roi2 = roi2.*edge_partImg2;
+
+% There is a white edge around the processed partImg. We need to get rid of
+% it
+edge_partImg3 = edge(lum(partImg3), 'canny', [0.0000001, 0.5]);
+se = strel('disk',3);
+edge_partImg3 = imdilate(edge_partImg3, se);
+figure('Name', 'Edge part image3'),imshow(edge_partImg3);
+edge_partImg3 = ~edge_partImg3;
+roi3 = roi3.*edge_partImg3;
 
 % Create the final image by combining hybrid smoothed image with processed
 % partImg
@@ -354,6 +397,14 @@ for j=1:Col
             finalImg(i,j,1) = partImg(i,j,1);
             finalImg(i,j,2) = partImg(i,j,2);
             finalImg(i,j,3) = partImg(i,j,3);
+        elseif (roi2(i,j) == 1)
+            finalImg(i,j,1) = partImg2(i,j,1);
+            finalImg(i,j,2) = partImg2(i,j,2);
+            finalImg(i,j,3) = partImg2(i,j,3);
+        elseif (roi3(i,j) == 1)
+            finalImg(i,j,1) = partImg3(i,j,1);
+            finalImg(i,j,2) = partImg3(i,j,2);
+            finalImg(i,j,3) = partImg3(i,j,3);
         else
             finalImg(i,j,1) = imageOut(i,j,1);
             finalImg(i,j,2) = imageOut(i,j,2);
