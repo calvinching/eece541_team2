@@ -1,8 +1,8 @@
 clear all;
 close all;
 
-aviobj = avifile('bistro01_HybridTMO.avi'); %creating a movie object
-myFolder = '/Users/calvinching/Documents/ubc/eece_541/project/HDRImages/bistro_01';
+aviobj = avifile('bistro01_HybridTMO_nocheat.avi'); %creating a movie object
+myFolder = '../HDRImages/bistro_01';
 if ~isdir(myFolder)
   errorMessage = sprintf('Error: The following folder does not exist:\n%s', myFolder);
   uiwait(warndlg(errorMessage));
