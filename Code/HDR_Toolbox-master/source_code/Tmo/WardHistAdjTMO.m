@@ -66,7 +66,7 @@ LlMax = log(LMax);
 LlMin = log(LMin);
 
 %Display characteristics in cd/m^2
-LdMax=100;    LldMax=log(LdMax);
+LdMax=500;    LldMax=log(LdMax);
 LdMin=1;      LldMin=log(LdMin);
 
 %function P
@@ -92,7 +92,6 @@ L(L>LMax) = LMax;
 x=(LlMin:((LlMax-LlMin)/(nBin-1)):LlMax)';
 pps = spline(x,Pcum);
 Ld  = exp(LldMin+(LldMax-LldMin)*ppval(pps,real(log(L))));
-hdrimwrite(Ld,'ld.pfm');
 Ld  = (Ld-LdMin)/(LdMax-LdMin);
 
 %Changing luminance

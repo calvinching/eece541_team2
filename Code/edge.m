@@ -1,4 +1,4 @@
-function [eout,dir,thresh,gv_45,gh_135] = edge(varargin)
+function [eout,dir,grad,thresh,gv_45,gh_135] = edge(varargin)
 %EDGE Find edges in intensity image.
 %   EDGE takes an intensity or a binary image I as its input, and returns a
 %   binary image BW of the same size as I, with 1's where the function
@@ -189,7 +189,7 @@ function [eout,dir,thresh,gv_45,gh_135] = edge(varargin)
 [a,method,thresh,sigma,thinning,H,kx,ky] = parse_inputs(varargin{:});
 
 % Check that the user specified a valid number of output arguments
-if ~any(strcmp(method,{'sobel','roberts','prewitt'})) && (nargout>2)
+if ~any(strcmp(method,{'sobel','roberts','prewitt'})) && (nargout>3)
     error(message('images:edge:tooManyOutputs'))
 end
 
@@ -229,6 +229,7 @@ if strcmp(method,'canny')
     % Strength
     e = thinAndThreshold(e, dx, dy, magGrad, lowThresh, highThresh);
     thresh = [lowThresh highThresh];
+    grad = magGrad;
     
 elseif strcmp(method,'canny_old')
     % Magic numbers
