@@ -1,10 +1,10 @@
-%function outImage = hybrid_3x3_matrix(im_path)
-clear all;
-close all;
+function outImage = hybrid_3x3_matrix(im_path)
+%clear all;
+%close all;
 
 tileSize = 4;
 
-im_path = '../HDRImages/bistro_01/bistro_01_000426.hdr';
+%im_path = '../HDRImages/bistro_01/bistro_01_000426.hdr';
 len = numel(im_path);
 file_num = str2double(im_path((len-6):(len-4)));
 
@@ -343,6 +343,6 @@ L = im_lab(:,:,1)/max_luminosity;
 im_lab(:,:,1) = imadjust(L,[0.075;0.975],[0;1])*max_luminosity;
 imageOut = applycform(im_lab, lab2srgb); % convert back to RGB
 
-figure('Name', 'Final hybrid image'),imshow(imageOut);
+%figure('Name', 'Final hybrid image'),imshow(imageOut);
 
 outImage = imageOut;
