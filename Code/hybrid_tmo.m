@@ -2,11 +2,7 @@
 clear all;
 close all;
 
-tileSize = 5;
-
 im_path = '../HDRImages/bistro_01/bistro_01_000295.hdr';
-len = numel(im_path);
-file_num = str2double(im_path((len-6):(len-4)));
 
 % Load original image
 im = hdrimread(im_path);
@@ -22,7 +18,7 @@ norm_L = zeros(Row,Col);
 
 % Edge detection applied to original image
 %[edge_mask, dir, magGrad] = edge(luminance, 'canny', [0.000008, 0.00005]);
-[edge_mask, dir] = canny_edges(im_path, 1.25, 0.05, 1.0);
+[edge_mask, dir] = canny_edges(im_path, 1.25, 0.5, 1.0);
 
 magGrad = imread('gradient.bmp');
 magGrad_double = double(magGrad);
@@ -41,8 +37,6 @@ for j=1:1:Col
     end
 end
 
-max_g_threshold = max_g * 0.4;
-% for exp=0.1:0.1:1
 exp=2;
 for j=1:1:Col
     for i=1:1:Row
@@ -54,32 +48,21 @@ for j=1:1:Col
         end
     end
 end
-% file = sprintf('../img/edge_mask%d.png',exp);
-% imwrite(edge_mask, file);
-% end
+
+figure('Name', 'Closed Edge Mask'), imshow(edge_mask);
+% Filter out the noise
+% new_edge_mask = edge_mask;
 % for j=1:1:Col
 %     for i=1:1:Row
-%         if (magGrad(i,j) > max_g_threshold)
-%             edge_mask(i,j) = 1;
-%         else
-%             edge_mask(i,j) = 0;
+%         per = check_neighbors(edge_mask,i,j,3);
+%         if (per < 0.5)
+%             new_edge_mask(i,j) = 0;
 %         end
 %     end
 % end
-%figure('Name', 'Edge Mask'), imshow(edge_mask);
+% figure('Name', 'Filtered Edge Mask'), imshow(new_edge_mask);
 % 
-% max_iter = 50;
-% iter = 0;
-% while true
-%     [edge_mask, num] = close_mask(edge_mask);
-%     fprintf('num %d\n', num);
-%     %imshow(edge_mask);
-%     if num < 100
-%         break;
-%     end
-%     iter = iter + 1;
-% end
-figure('Name', 'Closed Edge Mask'), imshow(edge_mask);
+% edge_mask = new_edge_mask;
 
 % Convert rad to deg and convert to 0 to 360 degrees
 deg = radtodeg(dir);
@@ -102,27 +85,24 @@ ward_img_uint8 = im2uint8(ward_img);
 %figure('Name', 'Ward'),imshow(ward_img);
 
 % Apply iCAM on the image and apply Gamma correction
-max_lum_ori = max(luminance(:));
-iCAM_img_uint8 = iCAM06_HDR(im, max_lum_ori, 0.7, 1.3);
+iCAM_img_uint8 = iCAM06_HDR(im, 22000, 0.5, 1.25);
 iCAM_img = double(iCAM_img_uint8)/255.0;
-iCAM_img = GammaTMO(iCAM_img, 2.2, 0, 0);
+iCAM_img = GammaTMO(iCAM_img, 1.8, 0, 0);
 iCAM_img = real(iCAM_img);
-%figure('Name', 'iCAM'),imshow(iCAM_img);
+% Convert to HSV color mapping
+iCAM_hsv = rgb2hsv(iCAM_img);
+% Adjust the V channel
+iCAM_hsv(:,:,3) = imadjust(iCAM_hsv(:,:,3),[0;0.85],[0;1]);
+% Adjust the S channel
+iCAM_hsv(:,:,2) = iCAM_hsv(:,:,2)*1.2;
+% Convert back to RGB
+iCAM_img = hsv2rgb(iCAM_hsv);
+% Our image still looks kind of Green, so adjust R and B channels
+iCAM_img(:,:,1) = iCAM_img(:,:,1)*1.02;
+iCAM_img(:,:,3) = iCAM_img(:,:,3)*1.06;
+%figure('Name', 'iCAM processed'),imshow(iCAM_img);
 
-% Get the luminance values of the Ward and iCAM images
-lum_iCAM = lum(iCAM_img_uint8);
-lum_ward = lum(ward_img_uint8);
-lum_iCAM = double(lum_iCAM);
-lum_ward = double(lum_ward);
-
-% Get the difference between the luminance so we know how much weighting to
-% use
-diff = abs(lum_iCAM - lum_ward);
-[max_diff, loc_diff] = max(diff(:));
-
-num_neighbors = 20;
-max_neighbors = (num_neighbors * 2 + 1)^2 - 1;
-max_neighbors = double(max_neighbors);
+num_neighbors = 30;
 for j=1:Col
     disp(['Doing column: ' num2str(j)]);
     for i=1:Row
@@ -131,7 +111,9 @@ for j=1:Col
     end
 end
 figure('Name', 'Combined image'),imshow(imageOut);
-imsharpen(imageOut, 'Radius', 1.5, 'Amount', 2.0);
+
+% Sharpen final image
+imsharpen(imageOut, 'Radius', 1.5, 'Amount', 2.5);
 figure('Name', 'Sharpened image'),imshow(imageOut);
 
 % Final image process. Enhance dark area
@@ -142,9 +124,8 @@ im_lab = applycform(imageOut, srgb2lab); % convert to L*a*b*
 max_luminosity = 100;
 L = im_lab(:,:,1)/max_luminosity;
 
-im_lab(:,:,1) = imadjust(L,[0.075;0.975],[0;1])*max_luminosity;
+im_lab(:,:,1) = imadjust(L,[0.08;0.975],[0;1])*max_luminosity;
 imageOut = applycform(im_lab, lab2srgb); % convert back to RGB
 
 figure('Name', 'Final hybrid image'),imshow(imageOut);
-
 outImage = imageOut;

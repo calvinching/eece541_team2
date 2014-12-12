@@ -11,7 +11,7 @@ file_num = str2double(im_path((len-6):(len-4)));
 % Load original image
 im = hdrimread(im_path);
 luminance = lum(im);
-%figure('Name', 'Original Image'),imshow(im);
+figure('Name', 'Original Image'),imshow(im);
 
 % Initialize required matrix
 [Row, Col, RGB] = size(im);
@@ -42,7 +42,7 @@ figure('Name', 'Edge Mask'), imshow(edge_mask);
 while true
     [edge_mask, num] = close_mask(edge_mask);
     fprintf('num %d\n', num);
-    imshow(edge_mask);
+    %imshow(edge_mask);
     if num < 100
         break;
     end
@@ -89,6 +89,9 @@ diff = abs(lum_iCAM - lum_ward);
 [max_diff, loc_diff] = max(diff(:));
 
 weights = zeros(Row,Col);
+
+lower_bound = 0.55; % This should be > 0.5. The closer it gets to 1, the harder it is to blend
+m = (lower_bound-1)/max_diff;
 % Generate final image based on edge mask with weighting
 for j=1:Col
     disp(['Doing column: ' num2str(j)]);
@@ -97,7 +100,7 @@ for j=1:Col
         % of iCAM and Ward. The edge_weight should be between 1.0 and 0.5.
         % Right now, it's a linear inverse relationship between edge_weight
         % and difference.
-        weight = -(diff(i,j)/(max_diff * 2)) + 1.0;
+        weight = m * diff(i,j) + 1.0;
         if(edge_mask(i,j) == 1)
             imageOut(i,j,:) = weight*iCAM_img(i,j,:) + (1-weight)*ward_img(i,j,:);
         else
