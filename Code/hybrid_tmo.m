@@ -51,18 +51,18 @@ end
 
 figure('Name', 'Closed Edge Mask'), imshow(edge_mask);
 % Filter out the noise
-% new_edge_mask = edge_mask;
-% for j=1:1:Col
-%     for i=1:1:Row
-%         per = check_neighbors(edge_mask,i,j,3);
-%         if (per < 0.5)
-%             new_edge_mask(i,j) = 0;
-%         end
-%     end
-% end
+new_edge_mask = edge_mask;
+for j=1:1:Col
+    for i=1:1:Row
+        per = check_neighbors(edge_mask,i,j,3);
+        if (per < 0.5)
+            new_edge_mask(i,j) = 0;
+        end
+    end
+end
 % figure('Name', 'Filtered Edge Mask'), imshow(new_edge_mask);
 % 
-% edge_mask = new_edge_mask;
+edge_mask = new_edge_mask;
 
 % Convert rad to deg and convert to 0 to 360 degrees
 deg = radtodeg(dir);
@@ -92,7 +92,7 @@ iCAM_img = real(iCAM_img);
 % Convert to HSV color mapping
 iCAM_hsv = rgb2hsv(iCAM_img);
 % Adjust the V channel
-iCAM_hsv(:,:,3) = imadjust(iCAM_hsv(:,:,3),[0;0.85],[0;1]);
+iCAM_hsv(:,:,3) = imadjust(iCAM_hsv(:,:,3),[0.075;0.9],[0;1]);
 % Adjust the S channel
 iCAM_hsv(:,:,2) = iCAM_hsv(:,:,2)*1.2;
 % Convert back to RGB
@@ -102,12 +102,14 @@ iCAM_img(:,:,1) = iCAM_img(:,:,1)*1.02;
 iCAM_img(:,:,3) = iCAM_img(:,:,3)*1.06;
 %figure('Name', 'iCAM processed'),imshow(iCAM_img);
 
+weights = zeros(Row, Col);
 num_neighbors = 30;
 for j=1:Col
     disp(['Doing column: ' num2str(j)]);
     for i=1:Row
         weight = check_neighbors(edge_mask, i, j, num_neighbors);
         imageOut(i,j,:) = weight*iCAM_img(i,j,:) + (1-weight)*ward_img(i,j,:);
+        weights(i,j) = weight;
     end
 end
 figure('Name', 'Combined image'),imshow(imageOut);
@@ -128,4 +130,5 @@ im_lab(:,:,1) = imadjust(L,[0.08;0.975],[0;1])*max_luminosity;
 imageOut = applycform(im_lab, lab2srgb); % convert back to RGB
 
 figure('Name', 'Final hybrid image'),imshow(imageOut);
+figure('Name', 'Weights'),imshow(weights);
 outImage = imageOut;
