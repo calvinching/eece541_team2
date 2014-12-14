@@ -1,8 +1,8 @@
-%function outImage = hybrid_3x3_matrix(im_path)
-clear all;
-close all;
+function outImage = hybrid_tmo(im_path)
+% clear all;
+% close all;
 
-im_path = '../HDRImages/bistro_01/bistro_01_000295.hdr';
+%im_path = '../HDRImages/bistro_01/bistro_01_000295.hdr';
 
 % Load original image
 im = hdrimread(im_path);
@@ -11,7 +11,6 @@ luminance = lum(im);
 
 % Initialize required matrix
 [Row, Col, RGB] = size(im);
-modified = zeros(Row,Col);
 imageOut = zeros(Row,Col,RGB);
 norm_G = zeros(Row,Col);
 norm_L = zeros(Row,Col);
@@ -40,7 +39,7 @@ end
 exp=2;
 for j=1:1:Col
     for i=1:1:Row
-        threshold = norm_L(i,j)^exp;
+        threshold = norm_L(i,j)^exp + 0.01;
         if (norm_G(i,j) > threshold)
             edge_mask(i,j) = 1;
         else
@@ -49,39 +48,23 @@ for j=1:1:Col
     end
 end
 
-figure('Name', 'Closed Edge Mask'), imshow(edge_mask);
 % Filter out the noise
 new_edge_mask = edge_mask;
 for j=1:1:Col
     for i=1:1:Row
-        per = check_neighbors(edge_mask,i,j,3);
+        per = check_neighbors(edge_mask,i,j,2);
         if (per < 0.5)
             new_edge_mask(i,j) = 0;
         end
     end
 end
-% figure('Name', 'Filtered Edge Mask'), imshow(new_edge_mask);
-% 
 edge_mask = new_edge_mask;
-
-% Convert rad to deg and convert to 0 to 360 degrees
-deg = radtodeg(dir);
-for j=1:1:Col
-    for i=1:1:Row
-        if deg(i,j) < 0
-            deg(i,j) = 360 + deg(i,j);
-        end
-    end
-end 
-[v,ind]=max(deg);
-[v1,ind1]=max(max(deg));
-disp(sprintf('The largest element in deg matrix is %f at (%d,%d).', v1, ind(ind1), ind1 ));
+%figure('Name', 'Closed Edge Mask'), imshow(edge_mask);
 
 % Apply Ward on the image and apply Gamma correction
 ward_img = WardHistAdjTMO(im,5);
 ward_img = GammaTMO(ward_img, 2.2, 0, 0);
 ward_img = real(ward_img);
-ward_img_uint8 = im2uint8(ward_img);
 %figure('Name', 'Ward'),imshow(ward_img);
 
 % Apply iCAM on the image and apply Gamma correction
@@ -103,7 +86,7 @@ iCAM_img(:,:,3) = iCAM_img(:,:,3)*1.06;
 %figure('Name', 'iCAM processed'),imshow(iCAM_img);
 
 weights = zeros(Row, Col);
-num_neighbors = 30;
+num_neighbors = 20;
 for j=1:Col
     disp(['Doing column: ' num2str(j)]);
     for i=1:Row
@@ -112,11 +95,11 @@ for j=1:Col
         weights(i,j) = weight;
     end
 end
-figure('Name', 'Combined image'),imshow(imageOut);
+%figure('Name', 'Combined image'),imshow(imageOut);
 
 % Sharpen final image
 imsharpen(imageOut, 'Radius', 1.5, 'Amount', 2.5);
-figure('Name', 'Sharpened image'),imshow(imageOut);
+%figure('Name', 'Sharpened image'),imshow(imageOut);
 
 % Final image process. Enhance dark area
 srgb2lab = makecform('srgb2lab');
@@ -129,6 +112,7 @@ L = im_lab(:,:,1)/max_luminosity;
 im_lab(:,:,1) = imadjust(L,[0.08;0.975],[0;1])*max_luminosity;
 imageOut = applycform(im_lab, lab2srgb); % convert back to RGB
 
-figure('Name', 'Final hybrid image'),imshow(imageOut);
-figure('Name', 'Weights'),imshow(weights);
+% figure('Name', 'Final hybrid image'),imshow(imageOut);
+% figure('Name', 'Weights'),imshow(weights);
+%imwrite(imageOut, '../out/hybrid_tmo_sample.png');
 outImage = imageOut;
