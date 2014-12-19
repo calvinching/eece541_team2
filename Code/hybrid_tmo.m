@@ -2,7 +2,9 @@ function outImage = hybrid_tmo(im_path)
 % clear all;
 % close all;
 
-%im_path = '../HDRImages/bistro_01/bistro_01_000295.hdr';
+% im_path = '../HDRImages/bistro_01/bistro_01_000295.hdr';
+% len = numel(im_path);
+% file_num = str2double(im_path((len-6):(len-4)));
 
 % Load original image
 im = hdrimread(im_path);
@@ -65,12 +67,12 @@ edge_mask = new_edge_mask;
 ward_img = WardHistAdjTMO(im,5);
 ward_img = GammaTMO(ward_img, 2.2, 0, 0);
 ward_img = real(ward_img);
-%figure('Name', 'Ward'),imshow(ward_img);
+% figure('Name', 'Ward'),imshow(ward_img);
 
 % Apply iCAM on the image and apply Gamma correction
 iCAM_img_uint8 = iCAM06_HDR(im, 22000, 0.5, 1.25);
 iCAM_img = double(iCAM_img_uint8)/255.0;
-iCAM_img = GammaTMO(iCAM_img, 1.8, 0, 0);
+iCAM_img = GammaTMO(iCAM_img, 2.2, 0, 0);
 iCAM_img = real(iCAM_img);
 % Convert to HSV color mapping
 iCAM_hsv = rgb2hsv(iCAM_img);
@@ -83,7 +85,7 @@ iCAM_img = hsv2rgb(iCAM_hsv);
 % Our image still looks kind of Green, so adjust R and B channels
 iCAM_img(:,:,1) = iCAM_img(:,:,1)*1.02;
 iCAM_img(:,:,3) = iCAM_img(:,:,3)*1.06;
-%figure('Name', 'iCAM processed'),imshow(iCAM_img);
+% figure('Name', 'iCAM processed'),imshow(iCAM_img);
 
 weights = zeros(Row, Col);
 num_neighbors = 20;
@@ -109,10 +111,11 @@ im_lab = applycform(imageOut, srgb2lab); % convert to L*a*b*
 max_luminosity = 100;
 L = im_lab(:,:,1)/max_luminosity;
 
-im_lab(:,:,1) = imadjust(L,[0.08;0.975],[0;1])*max_luminosity;
+im_lab(:,:,1) = imadjust(L,[0.08;0.97],[0;1])*max_luminosity;
 imageOut = applycform(im_lab, lab2srgb); % convert back to RGB
 
 % figure('Name', 'Final hybrid image'),imshow(imageOut);
 % figure('Name', 'Weights'),imshow(weights);
-%imwrite(imageOut, '../out/hybrid_tmo_sample.png');
+% n = sprintf('../out/%d.png', file_num);
+% imwrite(imageOut, n);
 outImage = imageOut;

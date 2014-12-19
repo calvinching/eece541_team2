@@ -26,3 +26,10 @@ FalseColor(imgRempel,'log',1,-1,3,'Rempel Inverse tone mapped LDR image in false
 
 disp('4) Save the expanded image into a .pfm:');
 hdrimwrite(imgRempel,'Venice01_expanded_Rempel.pfm');
+
+disp('5) Applying TMO');
+tmoImg = TumblinRushmeierTMO(imgRempel, 25, 100, 100);
+
+h4 = figure(4);
+set(h4, 'Name', 'Output TMO image');
+imshow(tmoImg);
